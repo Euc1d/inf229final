@@ -207,6 +207,11 @@ flutter build ios --release
 - **Share Ingredients** - "Add to List" button on recipe detail page
 
 ## 🎨 Screenshots
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/1c0c8273-7c63-4e9f-8018-c2874192df62" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/b1cdcec1-f2aa-4b08-977e-d55550ac00c6" />
+
+
+
 
 ### Light Mode
 - **Home Screen** - Recipe grid with search and category filters
