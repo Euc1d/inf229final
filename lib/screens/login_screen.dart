@@ -39,6 +39,15 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         }
+      } else {
+        // Успешный вход - ждём обновления UI
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted && authProvider.isAuthenticated) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       }
     }
   }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/notification_service.dart';
 import 'login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,17 +18,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
+  String? _avatarPath;
 
   @override
   void initState() {
     super.initState();
-    _loadNotificationPreference();
+    _loadPreferences();
   }
 
-  Future<void> _loadNotificationPreference() async {
+  Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     setState(() {
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
+      _avatarPath = prefs.getString('avatar_${authProvider.user?.id}');
     });
   }
 
@@ -165,7 +170,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: 30),
-            CircleAvatar(
+            _avatarPath != null && File(_avatarPath!).existsSync()
+                ? ClipOval(
+              child: Image.file(
+                File(_avatarPath!),
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+              ),
+            )
+                : CircleAvatar(
               radius: 60,
               backgroundColor: Colors.orange,
               child: Text(
@@ -177,6 +191,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(user.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 5),
             Text(user.email, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            const SizedBox(height: 15),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
+                _loadPreferences();
+              },
+              icon: const Icon(Icons.edit, color: Colors.white),
+              label: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+              ),
+            ),
             const SizedBox(height: 30),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),

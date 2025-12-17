@@ -44,9 +44,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         }
+      } else {
+        // Регистрация успешна - выходим и отправляем на логин
+        await authProvider.signOut();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please login.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
       }
     }
-  }ч
+  }
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);

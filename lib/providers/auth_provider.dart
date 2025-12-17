@@ -13,22 +13,42 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
 
   AuthProvider() {
+    _checkInitialAuth();
     _authService.authStateChanges.listen((User? firebaseUser) async {
       if (firebaseUser != null) {
         await refreshUserData();
       } else {
         _user = null;
+        _isLoading = false;
         notifyListeners();
       }
     });
   }
 
+  Future<void> _checkInitialAuth() async {
+    _isLoading = true;
+    notifyListeners();
+
+    final firebaseUser = _authService.currentUser;
+    if (firebaseUser != null) {
+      await refreshUserData();
+    } else {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> refreshUserData() async {
+    _isLoading = true;
+    notifyListeners();
+
     final firebaseUser = _authService.currentUser;
     if (firebaseUser != null) {
       _user = await _authService.getUserData(firebaseUser.uid);
-      notifyListeners();
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<String?> signUp(String email, String password, String name) async {

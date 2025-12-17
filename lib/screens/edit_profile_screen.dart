@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import '../providers/auth_provider.dart' as auth;
 
@@ -24,15 +24,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _isLoading = false;
   bool _showPasswordFields = false;
-  XFile? _selectedImage;
+  String? _selectedImagePath;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
     final authProvider = Provider.of<auth.AuthProvider>(context, listen: false);
     _nameController.text = authProvider.user?.name ?? '';
     _emailController.text = authProvider.user?.email ?? '';
+
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedImagePath = prefs.getString('avatar_${authProvider.user?.id}');
+    });
   }
 
   @override
@@ -56,12 +65,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (image != null) {
         setState(() {
-          _selectedImage = image;
+          _selectedImagePath = image.path;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo selected!'), duration: Duration(seconds: 2)),
-        );
       }
     } catch (e) {
       if (mounted) {
@@ -102,20 +107,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<String?> _uploadAvatar(String userId) async {
-    if (_selectedImage == null) return null;
-
-    try {
-      final ref = FirebaseStorage.instance.ref().child('avatars').child('$userId.jpg');
-      await ref.putFile(File(_selectedImage!.path));
-      final url = await ref.getDownloadURL();
-      return url;
-    } catch (e) {
-      print('Error uploading avatar: $e');
-      return null;
-    }
-  }
-
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -129,23 +120,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (user == null) throw Exception('No user logged in');
 
-      String? avatarUrl;
-      if (_selectedImage != null) {
-        avatarUrl = await _uploadAvatar(user.uid);
+      if (_selectedImagePath != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('avatar_${user.uid}', _selectedImagePath!);
       }
 
-      Map<String, dynamic> updates = {'name': _nameController.text.trim()};
-      if (avatarUrl != null) {
-        updates['avatarUrl'] = avatarUrl;
-      }
-
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(updates);
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'name': _nameController.text.trim(),
+      });
 
       if (_emailController.text.trim() != user.email) {
         await user.verifyBeforeUpdateEmail(_emailController.text.trim());
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Verification email sent. Check your inbox.'), duration: Duration(seconds: 3)),
+            const SnackBar(
+              content: Text('Verification email sent. Check your inbox.'),
+              duration: Duration(seconds: 3),
+            ),
           );
         }
       }
@@ -183,56 +174,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Widget _buildAvatar(auth.AuthProvider authProvider) {
-    final user = authProvider.user;
-
-    if (_selectedImage != null) {
-      return ClipOval(
-        child: Image.file(
-          File(_selectedImage!.path),
-          width: 120,
-          height: 120,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-
-    if (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty) {
-      return ClipOval(
-        child: Image.network(
-          user.avatarUrl!,
-          width: 120,
-          height: 120,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const CircleAvatar(
-              radius: 60,
-              child: CircularProgressIndicator(),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(user),
-        ),
-      );
-    }
-
-    return _buildDefaultAvatar(user);
-  }
-
-  Widget _buildDefaultAvatar(user) {
-    return CircleAvatar(
-      radius: 60,
-      backgroundColor: Colors.orange,
-      child: Text(
-        user?.name.isNotEmpty == true ? user.name[0].toUpperCase() : 'U',
-        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<auth.AuthProvider>(context);
+    final user = authProvider.user;
 
     return Scaffold(
       appBar: AppBar(
@@ -253,7 +198,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onTap: _showImageSourceDialog,
                 child: Stack(
                   children: [
-                    _buildAvatar(authProvider),
+                    _selectedImagePath != null
+                        ? ClipOval(
+                      child: Image.file(
+                        File(_selectedImagePath!),
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                        : CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.orange,
+                      child: Text(
+                        user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'U',
+                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
                     Positioned(
                       bottom: 0,
                       right: 0,
