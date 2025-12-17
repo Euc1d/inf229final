@@ -417,5 +417,3 @@ Almaty, Kazakhstan
 ---
 
 **Built with ❤️ and Flutter by Danial & Gaziz**
-
-*December 2024*
