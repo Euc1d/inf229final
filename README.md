@@ -1,4 +1,4 @@
-# 🍽️ Recipe Manager App
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/fac1b02f-360d-44df-9758-80cc3b3c356b" /><img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/450261fd-d759-46a7-b690-e00f5458260b" /># 🍽️ Recipe Manager App
 
 A comprehensive Flutter mobile application for managing recipes, meal planning, and cooking with an intuitive user interface and powerful features.
 
@@ -209,6 +209,29 @@ flutter build ios --release
 ## 🎨 Screenshots
 <img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/1c0c8273-7c63-4e9f-8018-c2874192df62" />
 <img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/b1cdcec1-f2aa-4b08-977e-d55550ac00c6" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/32a67674-084c-4e49-815d-7f8d6ec93796" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/1b4b00b8-f916-40e0-9771-84c6bf41849d" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/ff536d55-0b98-451b-bf02-b64736fd1d33" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/933b87d9-b4d0-4538-8846-8874ad22e698" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/cd84c71a-eff1-4fb3-a7e0-b9a204f2d3df" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/0c28c681-f408-473c-84a0-9ec44d876c8d" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/1a240410-6a70-4a1a-bd71-dbfbef97ce62" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/dc3cfa21-51f6-4715-ac89-aee2d1a1aa5b" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/21b116db-26d4-46c7-8949-3c9a13823236" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/7977375a-58ae-4a24-8b27-914daf8d7e75" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/cb2e0354-2ab8-47c4-934f-d296040bd815" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/70aebd1c-ea9d-46fb-a60f-47a8422ef496" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/2dd4b090-1899-4c6e-86f3-f3260b113044" />
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/9f9469d5-6f16-4d57-8ec5-cd42426c07c0" />
+
+
+
+
+
+
+
+
+
 
 
 
