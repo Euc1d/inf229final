@@ -1,4 +1,4 @@
-<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/fac1b02f-360d-44df-9758-80cc3b3c356b" /><img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/450261fd-d759-46a7-b690-e00f5458260b" /># 🍽️ Recipe Manager App
+# 🍽️ Recipe Manager App
 
 A comprehensive Flutter mobile application for managing recipes, meal planning, and cooking with an intuitive user interface and powerful features.
 
