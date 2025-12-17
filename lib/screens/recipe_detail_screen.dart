@@ -113,9 +113,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Future<void> _deleteRecipe() async {
     final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    if (authProvider.user == null) return;
 
     try {
-      await recipeProvider.deleteRecipe(widget.recipe.id);
+      await recipeProvider.deleteRecipe(widget.recipe.id, authProvider.user!.id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

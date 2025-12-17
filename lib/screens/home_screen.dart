@@ -5,7 +5,6 @@ import '../providers/recipe_provider.dart';
 import 'recipe_detail_screen.dart';
 import 'favorites_screen.dart';
 import 'profile_screen.dart';
-import 'login_screen.dart';
 import 'shopping_list_screen.dart';
 import 'add_recipe_screen.dart';
 
@@ -24,7 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<RecipeProvider>(context, listen: false).loadRecipes();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+
+      if (authProvider.user != null) {
+        recipeProvider.loadRecipes(authProvider.user!.id);
+        recipeProvider.loadFavoriteRecipes(authProvider.user!.favoriteRecipes);
+      }
     });
   }
 
@@ -47,13 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
         onPressed: () async {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          if (authProvider.user == null) return;
+
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
           );
 
           if (result == true) {
-            Provider.of<RecipeProvider>(context, listen: false).loadRecipes();
+            Provider.of<RecipeProvider>(context, listen: false).loadRecipes(authProvider.user!.id);
           }
         },
         backgroundColor: Colors.orange,
@@ -242,6 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecipeList() {
     final recipeProvider = Provider.of<RecipeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
     if (recipeProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -272,7 +281,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await Provider.of<RecipeProvider>(context, listen: false).loadRecipes();
+        if (authProvider.user != null) {
+          await Provider.of<RecipeProvider>(context, listen: false).loadRecipes(authProvider.user!.id);
+        }
       },
       child: GridView.builder(
         padding: const EdgeInsets.all(20),
@@ -297,6 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () async {
+        if (authProvider.user == null) return;
+
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -305,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         if (result == true) {
-          Provider.of<RecipeProvider>(context, listen: false).loadRecipes();
+          Provider.of<RecipeProvider>(context, listen: false).loadRecipes(authProvider.user!.id);
         }
       },
       child: Container(

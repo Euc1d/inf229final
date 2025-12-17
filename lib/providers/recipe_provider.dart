@@ -19,12 +19,10 @@ class RecipeProvider extends ChangeNotifier {
   List<Recipe> get filteredRecipes {
     List<Recipe> filtered = _recipes;
 
-    // Фильтр по категории
     if (_selectedCategory != 'All') {
       filtered = filtered.where((recipe) => recipe.category == _selectedCategory).toList();
     }
 
-    // Фильтр по поиску
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((recipe) {
         final titleMatch = recipe.title.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -54,18 +52,43 @@ class RecipeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadRecipes() async {
+  Future<void> loadRecipes(String userId) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _recipes = await _databaseService.getRecipes();
+      _recipes = await _databaseService.getRecipes(userId);
     } catch (e) {
       print('Error loading recipes: $e');
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> addRecipe(Recipe recipe) async {
+    try {
+      await _databaseService.addRecipe(recipe);
+      _recipes.add(recipe);
+      notifyListeners();
+    } catch (e) {
+      print('Error adding recipe: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateRecipe(Recipe recipe) async {
+    try {
+      await _databaseService.updateRecipe(recipe);
+      final index = _recipes.indexWhere((r) => r.id == recipe.id);
+      if (index != -1) {
+        _recipes[index] = recipe;
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error updating recipe: $e');
+      rethrow;
+    }
   }
 
   Future<void> loadFavoriteRecipes(List<String> recipeIds) async {
@@ -89,7 +112,7 @@ class RecipeProvider extends ChangeNotifier {
     return await _databaseService.getRecipeById(id);
   }
 
-  Future<void> deleteRecipe(String recipeId) async {
+  Future<void> deleteRecipe(String recipeId, String userId) async {
     try {
       await _databaseService.deleteRecipe(recipeId);
       _recipes.removeWhere((recipe) => recipe.id == recipeId);

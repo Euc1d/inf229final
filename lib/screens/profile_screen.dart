@@ -8,6 +8,7 @@ import '../services/notification_service.dart';
 import 'login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'edit_profile_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -259,6 +260,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   const Divider(height: 1),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.cloud_download, color: Colors.red),
+                    ),
+                    title: const Text('Load Default Recipes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Load 10 Arabic recipes (admin only)'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: _loadDefaultRecipes,
+                  ),
+                  const Divider(height: 1),
                   _buildProfileTile(
                     context: context,
                     icon: Icons.help,
@@ -318,5 +331,207 @@ class _ProfileScreenState extends State<ProfileScreen> {
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
     );
+  }
+  Future<void> _loadDefaultRecipes() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // ПРОВЕРЯЕМ - уже загружены или нет?
+      final existing = await firestore
+          .collection('recipes')
+          .where('userId', isEqualTo: 'default')
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Default recipes already loaded!'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Показываем подтверждение
+      bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Load Default Recipes'),
+          content: const Text('This will load 10 Arabic recipes. Continue?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Load')),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      // Показываем прогресс
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Loading recipes...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final recipes = [
+        {
+          'title': 'Hummus',
+          'description': 'Creamy Middle Eastern chickpea dip',
+          'category': 'Snack',
+          'cookingTime': 15,
+          'servings': 4,
+          'ingredients': ['2 cups chickpeas', '1/4 cup tahini', '2 cloves garlic', '3 tbsp lemon juice', '2 tbsp olive oil', 'Salt', 'Paprika'],
+          'steps': ['Blend chickpeas, tahini, garlic, lemon', 'Add water until smooth', 'Season with salt', 'Serve with olive oil and paprika'],
+          'imageUrl': 'https://images.unsplash.com/photo-1637949385162-e416fb15b2ce?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Falafel',
+          'description': 'Crispy chickpea balls',
+          'category': 'Lunch',
+          'cookingTime': 30,
+          'servings': 4,
+          'ingredients': ['2 cups chickpeas', '1 onion', '4 cloves garlic', '1 cup parsley', '1 cup cilantro', 'Spices', 'Oil'],
+          'steps': ['Blend chickpeas with herbs', 'Form into balls', 'Deep fry until golden', 'Serve with tahini'],
+          'imageUrl': 'https://plus.unsplash.com/premium_photo-1663853051660-91bd9b822799?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Chicken Shawarma',
+          'description': 'Marinated chicken with spices',
+          'category': 'Dinner',
+          'cookingTime': 45,
+          'servings': 4,
+          'ingredients': ['1 kg chicken', '4 cloves garlic', '2 tsp cumin', '2 tsp paprika', 'Lemon juice', 'Olive oil', 'Pita bread'],
+          'steps': ['Mix spices with lemon and oil', 'Marinate chicken 2 hours', 'Grill until cooked', 'Serve in pita'],
+          'imageUrl': 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Tabbouleh',
+          'description': 'Fresh parsley salad',
+          'category': 'Lunch',
+          'cookingTime': 20,
+          'servings': 4,
+          'ingredients': ['2 cups parsley', '1/2 cup bulgur', '3 tomatoes', '1 cucumber', 'Green onions', 'Lemon juice', 'Olive oil'],
+          'steps': ['Soak bulgur 15 minutes', 'Mix all vegetables', 'Add bulgur', 'Dress with lemon and oil'],
+          'imageUrl': 'https://images.unsplash.com/photo-1529059997568-3d847b1154f0?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Fattoush',
+          'description': 'Bread salad with sumac',
+          'category': 'Lunch',
+          'cookingTime': 15,
+          'servings': 4,
+          'ingredients': ['2 pita breads', '4 cups lettuce', '2 tomatoes', '1 cucumber', 'Radishes', 'Lemon juice', 'Sumac'],
+          'steps': ['Toast pita and break', 'Mix vegetables', 'Add dressing', 'Add pita before serving'],
+          'imageUrl': 'https://images.unsplash.com/photo-1546069901-eacef0df6022?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Mansaf',
+          'description': 'Jordanian lamb with yogurt',
+          'category': 'Dinner',
+          'cookingTime': 90,
+          'servings': 6,
+          'ingredients': ['1 kg lamb', '3 cups jameed', '3 cups rice', 'Butter', 'Pine nuts', 'Almonds', 'Spices'],
+          'steps': ['Boil lamb until tender', 'Prepare jameed sauce', 'Cook rice', 'Toast nuts', 'Layer and serve'],
+          'imageUrl': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Mujadara',
+          'description': 'Lentils and rice',
+          'category': 'Dinner',
+          'cookingTime': 45,
+          'servings': 4,
+          'ingredients': ['1 cup lentils', '1 cup rice', '3 onions', 'Olive oil', 'Cumin', 'Salt'],
+          'steps': ['Cook lentils', 'Caramelize onions', 'Add rice to lentils', 'Top with onions'],
+          'imageUrl': 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Kunafa',
+          'description': 'Sweet cheese pastry',
+          'category': 'Dessert',
+          'cookingTime': 40,
+          'servings': 8,
+          'ingredients': ['500g kunafa dough', '500g cheese', 'Butter', 'Sugar', 'Rose water', 'Pistachios'],
+          'steps': ['Mix dough with butter', 'Layer with cheese', 'Bake until golden', 'Pour syrup', 'Garnish'],
+          'imageUrl': 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Baklava',
+          'description': 'Phyllo pastry with nuts',
+          'category': 'Dessert',
+          'cookingTime': 60,
+          'servings': 12,
+          'ingredients': ['Phyllo dough', '2 cups walnuts', '1 cup pistachios', 'Butter', 'Sugar', 'Honey'],
+          'steps': ['Layer phyllo with butter', 'Add nuts between layers', 'Cut and bake', 'Pour syrup'],
+          'imageUrl': 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        {
+          'title': 'Arabic Coffee',
+          'description': 'Traditional spiced coffee',
+          'category': 'Snack',
+          'cookingTime': 15,
+          'servings': 4,
+          'ingredients': ['3 tbsp coffee beans', '3 cups water', 'Cardamom', 'Saffron', 'Sugar'],
+          'steps': ['Boil water', 'Add coffee and cardamom', 'Simmer 5 minutes', 'Let settle', 'Serve with dates'],
+          'imageUrl': 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800',
+          'userId': 'default',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+      ];
+
+      for (var recipe in recipes) {
+        await firestore.collection('recipes').add(recipe);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ 10 recipes loaded!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }

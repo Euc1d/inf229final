@@ -4,36 +4,60 @@ import '../models/recipe_model.dart';
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<List<Recipe>> getRecipes() async {
+  Future<List<Recipe>> getRecipes(String userId) async {
     try {
-      QuerySnapshot snapshot = await _firestore
+      QuerySnapshot userSnapshot = await _firestore
           .collection('recipes')
-          .orderBy('createdAt', descending: true)
+          .where('userId', isEqualTo: userId)
           .get();
 
-      return snapshot.docs
-          .map((doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>))
+      QuerySnapshot defaultSnapshot = await _firestore
+          .collection('recipes')
+          .where('userId', isEqualTo: 'default')
+          .get();
+
+      List<Recipe> userRecipes = userSnapshot.docs
+          .map((doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
+
+      List<Recipe> defaultRecipes = defaultSnapshot.docs
+          .map((doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+
+      return [...defaultRecipes, ...userRecipes];
     } catch (e) {
       print('Error getting recipes: $e');
       return [];
     }
   }
 
-  Future<List<Recipe>> getRecipesByCategory(String category) async {
+  Future<void> addRecipe(Recipe recipe) async {
     try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('recipes')
-          .where('category', isEqualTo: category)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      await _firestore.collection('recipes').add(recipe.toMap());
+      print('Recipe added successfully');
     } catch (e) {
-      print('Error getting recipes by category: $e');
-      return [];
+      print('Error adding recipe: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateRecipe(Recipe recipe) async {
+    try {
+      await _firestore.collection('recipes').doc(recipe.id).update(recipe.toMap());
+      print('Recipe updated successfully');
+    } catch (e) {
+      print('Error updating recipe: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteRecipe(String recipeId) async {
+    try {
+      await _firestore.collection('recipes').doc(recipeId).delete();
+      print('Recipe deleted successfully');
+    } catch (e) {
+      print('Error deleting recipe: $e');
+      rethrow;
     }
   }
 
@@ -41,20 +65,30 @@ class DatabaseService {
     try {
       DocumentSnapshot doc = await _firestore.collection('recipes').doc(id).get();
       if (doc.exists) {
-        return Recipe.fromMap(doc.data() as Map<String, dynamic>);
+        return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
+      return null;
     } catch (e) {
       print('Error getting recipe: $e');
+      return null;
     }
-    return null;
   }
 
-  Future<void> addRecipe(Recipe recipe) async {
+  Future<List<Recipe>> getFavoriteRecipes(List<String> recipeIds) async {
+    if (recipeIds.isEmpty) return [];
+
     try {
-      await _firestore.collection('recipes').doc(recipe.id).set(recipe.toMap());
+      List<Recipe> favorites = [];
+      for (String id in recipeIds) {
+        Recipe? recipe = await getRecipeById(id);
+        if (recipe != null) {
+          favorites.add(recipe);
+        }
+      }
+      return favorites;
     } catch (e) {
-      print('Error adding recipe: $e');
-      rethrow;
+      print('Error getting favorite recipes: $e');
+      return [];
     }
   }
 
@@ -72,34 +106,9 @@ class DatabaseService {
       }
 
       await userDoc.update({'favoriteRecipes': favorites});
+      print('Favorite toggled successfully');
     } catch (e) {
       print('Error toggling favorite: $e');
-      rethrow;
-    }
-  }
-
-  Future<List<Recipe>> getFavoriteRecipes(List<String> recipeIds) async {
-    if (recipeIds.isEmpty) return [];
-
-    try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('recipes')
-          .where(FieldPath.documentId, whereIn: recipeIds)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      print('Error getting favorite recipes: $e');
-      return [];
-    }
-  }
-  Future<void> deleteRecipe(String recipeId) async {
-    try {
-      await _firestore.collection('recipes').doc(recipeId).delete();
-    } catch (e) {
-      print('Error deleting recipe: $e');
       rethrow;
     }
   }
